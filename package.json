@@ -1,0 +1,24 @@
+{
+  "name": "spark-ai-summary",
+  "version": "1.0.0",
+  "description": "🤓用于博客AI摘要",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ljxme/spark-ai-summary.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ljxme/spark-ai-summary/issues"
+  },
+  "homepage": "https://github.com/ljxme/spark-ai-summary#readme",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
