@@ -139,7 +139,7 @@ module.exports = async (req, res) => {
 //     return "generated_token_string";
 // }
 
-作者: konoXIN
-链接: https://www.konoxin.top/posts/db7b3418
-来源: XIN's Blog | 前端开发 | Vue.js & JavaScript 技术分享
-著作权归作者所有。 商业转载请联系作者获得授权，非商业转载请注明出处。
+// 作者: konoXIN
+// 链接: https://www.konoxin.top/posts/db7b3418
+// 来源: XIN's Blog | 前端开发 | Vue.js & JavaScript 技术分享
+// 著作权归作者所有。 商业转载请联系作者获得授权，非商业转载请注明出处。
