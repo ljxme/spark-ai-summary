@@ -1,26 +1,27 @@
 /* 
-  GitHub JSON 缓存系统 (自动压缩 + 自动创建)
+  GitHub JSON 缓存系统 (自动压缩 + 自动创建 + 可选过期)
   用于在 Vercel / Astro 项目中替代本地 IndexedDB。
 */
 
 import { gzipSync, gunzipSync } from "fflate";
 
+// 环境变量
 const REPO_OWNER = process.env.GITHUB_OWNER;
 const REPO_NAME = process.env.GITHUB_REPO;
 const FILE_PATH = process.env.GITHUB_CACHE_PATH || "data/cache.json";
-const TOKEN = process.env.GITHUB_TOKEN;
+const TOKEN = process.env.GITHUB_TOKEN || ""; // 可选鉴权
+const MAX_AGE_DAYS = parseInt(process.env.GITHUB_CACHE_MAX_AGE || "7", 10); // 缓存有效天数，默认 7 天
 
 // 🚀 工具函数：请求 GitHub REST API
 async function githubRequest(url, options = {}) {
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${TOKEN}`,
-      Accept: "application/vnd.github+json",
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+  const headers = {
+    Accept: "application/vnd.github+json",
+    "Content-Type": "application/json",
+    ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
+    ...(options.headers || {}),
+  };
+
+  const res = await fetch(url, { ...options, headers });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`GitHub API 请求失败: ${res.status} ${text}`);
@@ -37,14 +38,28 @@ export async function getCache() {
     const json = JSON.parse(decoded);
 
     // 自动解压 gzip 内容
-    if (json.compressed) {
+    let cache = {};
+    if (json.compressed && json.data) {
       const binary = Buffer.from(json.data, "base64");
       const decompressed = gunzipSync(binary);
       const text = new TextDecoder().decode(decompressed);
-      return JSON.parse(text);
+      cache = JSON.parse(text);
     } else {
-      return json;
+      cache = json;
     }
+
+    // 🔹 检查缓存是否过期
+    const updatedAt = json.updated_at ? new Date(json.updated_at).getTime() : 0;
+    const ageMs = Date.now() - updatedAt;
+    const maxAgeMs = MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+
+    if (ageMs > maxAgeMs) {
+      console.log(`⏳ 缓存已过期（>${MAX_AGE_DAYS}天），正在清空...`);
+      await setCache({});
+      return {};
+    }
+
+    return cache;
   } catch (err) {
     if (err.message.includes("404")) {
       console.log("📦 未找到缓存文件，正在自动创建空缓存...");
