@@ -1,5 +1,5 @@
 /* 
-  GitHub JSON 缓存系统 (自动压缩版)
+  GitHub JSON 缓存系统 (自动压缩 + 自动创建)
   用于在 Vercel / Astro 项目中替代本地 IndexedDB。
 */
 
@@ -7,7 +7,7 @@ import { gzipSync, gunzipSync } from "fflate";
 
 const REPO_OWNER = process.env.GITHUB_OWNER;
 const REPO_NAME = process.env.GITHUB_REPO;
-const FILE_PATH = "data/cache.json"; // 可自行调整
+const FILE_PATH = process.env.GITHUB_CACHE_PATH || "data/cache.json";
 const TOKEN = process.env.GITHUB_TOKEN;
 
 // 🚀 工具函数：请求 GitHub REST API
@@ -46,7 +46,12 @@ export async function getCache() {
       return json;
     }
   } catch (err) {
-    console.warn("⚠️ 无法加载缓存，可能文件不存在：", err.message);
+    if (err.message.includes("404")) {
+      console.log("📦 未找到缓存文件，正在自动创建空缓存...");
+      await setCache({});
+      return {};
+    }
+    console.warn("⚠️ 无法加载缓存：", err.message);
     return {};
   }
 }
@@ -54,30 +59,40 @@ export async function getCache() {
 // 💾 写入缓存内容
 export async function setCache(newData) {
   try {
-    // Step 1️⃣ 读取原文件 SHA 以便更新
     const metaUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-    const meta = await githubRequest(metaUrl);
-    const sha = meta.sha;
+
+    // Step 1️⃣ 尝试获取现有文件 SHA（若不存在则为 null）
+    let sha = null;
+    try {
+      const meta = await githubRequest(metaUrl);
+      sha = meta.sha;
+    } catch (e) {
+      if (e.message.includes("404")) {
+        console.log("📄 新建缓存文件...");
+      } else {
+        throw e;
+      }
+    }
 
     // Step 2️⃣ 压缩数据
     const jsonString = JSON.stringify(newData);
     const compressed = gzipSync(new TextEncoder().encode(jsonString));
     const encoded = Buffer.from(compressed).toString("base64");
 
-    // Step 3️⃣ 生成最终 JSON
+    // Step 3️⃣ 构建上传内容
     const bodyData = {
       compressed: true,
       data: encoded,
       updated_at: new Date().toISOString(),
     };
 
-    // Step 4️⃣ 上传到 GitHub
+    // Step 4️⃣ 上传或新建文件
     await githubRequest(metaUrl, {
       method: "PUT",
       body: JSON.stringify({
-        message: "update cache",
+        message: sha ? "update cache" : "create cache",
         content: Buffer.from(JSON.stringify(bodyData, null, 2)).toString("base64"),
-        sha,
+        ...(sha ? { sha } : {}), // 有 sha 就更新，无 sha 就创建
       }),
     });
 
