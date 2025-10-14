@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
             const requestData = {
                 model: MODEL_NAME, // 使用正确的模型名称
                 messages: [
-                    { role: "system", content: "你是一个有用的助手，请根据用户提供的文章标题和内容生成一段简洁的摘要。" },
+                    { role: "system", content: "你是一个专业的博客文章摘要生成工具，请根据用户提供的文章标题和内容生成一段摘要，摘要内容必须在200到250字之间。" },
                     { role: "user", content: `文章标题：${title || '无标题'}\n文章内容：${content}` }
                 ],
                 temperature: 0.5,
