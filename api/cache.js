@@ -71,12 +71,12 @@ export async function getCache() {
   }
 }
 
-// 💾 写入缓存内容
+//写入缓存内容
 export async function setCache(newData) {
   try {
     const metaUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
 
-    // Step 1️⃣ 尝试获取现有文件 SHA（若不存在则为 null）
+    // Step 1 尝试获取现有文件 SHA（若不存在则为 null）
     let sha = null;
     try {
       const meta = await githubRequest(metaUrl);
@@ -89,19 +89,19 @@ export async function setCache(newData) {
       }
     }
 
-    // Step 2️⃣ 压缩数据
+    // Step 2️ 压缩数据
     const jsonString = JSON.stringify(newData);
     const compressed = gzipSync(new TextEncoder().encode(jsonString));
     const encoded = Buffer.from(compressed).toString("base64");
 
-    // Step 3️⃣ 构建上传内容
+    // Step 3️ 构建上传内容
     const bodyData = {
       compressed: true,
       data: encoded,
       updated_at: new Date().toISOString(),
     };
 
-    // Step 4️⃣ 上传或新建文件
+    // Step 4️ 上传或新建文件
     await githubRequest(metaUrl, {
       method: "PUT",
       body: JSON.stringify({
@@ -117,7 +117,7 @@ export async function setCache(newData) {
   }
 }
 
-// 🧩 追加/更新单条缓存（推荐调用）
+// 追加/更新单条缓存（推荐调用）
 export async function updateCacheEntry(key, value) {
   const cache = await getCache();
   cache[key] = value;
