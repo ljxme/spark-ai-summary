@@ -13,13 +13,23 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+
+  "type": "module",
+
   "bugs": {
     "url": "https://github.com/ljxme/spark-ai-summary/issues"
   },
   "homepage": "https://github.com/ljxme/spark-ai-summary#readme",
+
   "dependencies": {
     "fflate": "^0.8.2",
     "node-fetch": "^3.3.2"
-  }
+  },
+
+  "vercel": {
+    "external": []
+  },
+  "includeFiles": [
+    "node_modules/fflate/lib/node.cjs"
+  ]
 }

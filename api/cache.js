@@ -3,9 +3,10 @@
   用于在 Vercel / Astro 项目中替代本地 IndexedDB。
 */
 
-import { gzipSync, gunzipSync } from "fflate";
+import * as fflate from "fflate";
 
 // 环境变量
+const { gzipSync, gunzipSync } = fflate;
 const REPO_OWNER = process.env.GITHUB_OWNER;
 const REPO_NAME = process.env.GITHUB_REPO;
 const FILE_PATH = process.env.GITHUB_CACHE_PATH || "data/cache.json";
