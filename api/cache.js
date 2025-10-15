@@ -118,10 +118,26 @@ export async function setCache(newData) {
   }
 }
 
-// 追加/更新单条缓存（推荐调用）
+// 追加/更新单条缓存（GitHub 自动写入版）
 export async function updateCacheEntry(key, value) {
-  const cache = await getCache();
-  cache[key] = value;
-  await setCache(cache);
-  return value;
+  if (!key || value === undefined) {
+    throw new Error("updateCacheEntry 调用错误：必须提供 key 和 value");
+  }
+
+  try {
+    // 1️⃣ 获取当前缓存
+    const cache = await getCache();
+
+    // 2️⃣ 更新指定 key
+    cache[key] = value;
+
+    // 3️⃣ 写回 GitHub（自动压缩 + base64）
+    await setCache(cache);
+
+    console.log(`✅ 缓存已更新并写入 GitHub: ${key}`);
+    return value;
+  } catch (err) {
+    console.error(`❌ 更新缓存失败: ${key}`, err.message);
+    throw err; // 抛出错误供上层 API 捕获
+  }
 }
